@@ -1,42 +1,49 @@
-name: Entrega continua
+name: CD
 
-on:
-  workflow_call:
+on: workflow_call
 
 jobs:
 
   ECS:
     runs-on: ubuntu-latest
     steps:
-    - name: configurando credenciais da AWS
+    - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.ID_CHAVE_ACESSO }}
-        aws-secret-access-key: ${{ secrets.CHAVE_SECRETA }}
-        aws-region: us-east-2
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: sa-east-1
     
-    - name: Obtendo arquivo da tarefa
-      run: aws ecs describe-task-definition --task-definition Tarefa_API-GO --query taskDefinition > task-definition.json
+    - name: Get ECS Task Definition
+      run: |
+        aws ecs describe-task-definition \
+        --task-definition task-ci-cd-practice \
+        --query taskDefinition > task-definition.json
     
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition.json
-        container-name: Go
-        image: leonardosartorello/go_ci:${{github.run_number}}
+        container-name: task-ci-cd-practice-app
+        image: |-
+          ghcr.io/xurlz/go_ci:${{ case(
+            github.event_name == 'pull_request',
+              format('{0}-{1}',github.head_ref,github.run_number),
+            github.ref_name
+          ) }}
         environment-variables: |
-          HOST=${{ secrets.DBHOST }}
-          USER=${{ secrets.DBUSER }}
-          PASSWORD=${{ secrets.DBPASSWORD }}
-          DBNAME=${{ secrets.DBNAME }}
-          DBPORT=${{ secrets.DBPORT }}
+          HOST=${{ secrets.DB_HOST }}
+          USER=${{ secrets.DB_USER }}
+          PASSWORD=${{ secrets.DB_PASSWORD }}
+          DBNAME=${{ secrets.DB_NAME }}
+          DBPORT=${{ secrets.DB_PORT }}
           PORT=8000
           
     - name: Deploy Amazon ECS task definition
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: Servico_API-Go
-        cluster: API-Go
+        service: service-task-ci-cd-practice
+        cluster: cluster-ci-cd-practice
         wait-for-service-stability: true
