@@ -47,3 +47,8 @@ jobs:
         service: service-task-ci-cd-practice
         cluster: cluster-ci-cd-practice
         wait-for-service-stability: true
+
+    - name: Request
+      run: sleep 30; curl -fSsL http://ldbal-ci-cd-practice-1393171223.sa-east-1.elb.amazonaws.com:8080/teapot
+      continue-on-error: true
+
