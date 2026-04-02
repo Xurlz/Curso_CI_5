@@ -19,6 +19,10 @@ jobs:
         aws ecs describe-task-definition \
         --task-definition task-ci-cd-practice \
         --query taskDefinition > task-definition.json
+
+    # Copy task-definition.json to an .old file
+    - name: Task Definition Backup
+      run: cp task-definition.json{,.old}
     
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
@@ -51,4 +55,5 @@ jobs:
     - name: Request
       run: sleep 30; curl -fSsL http://ldbal-ci-cd-practice-1393171223.sa-east-1.elb.amazonaws.com:8080/teapot
       continue-on-error: true
+
 
