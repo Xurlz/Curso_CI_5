@@ -52,8 +52,22 @@ jobs:
         cluster: cluster-ci-cd-practice
         wait-for-service-stability: true
 
+    ##
+    # Send a request  on a service endpoint, if successful,
+    # assign an environment variable REQUEST with 0 value
+    ##
     - name: Request
-      run: sleep 30; curl -fSsL http://ldbal-ci-cd-practice-1393171223.sa-east-1.elb.amazonaws.com:8080/teapot
       continue-on-error: true
+      run: |-
+        sleep 30
+        curl -fSsL http://${{ secrets.LB_HOST }}:${{ secrets.LB_PORT }}/teapot
+        echo REQUEST=$? >> $GITHUB_ENV
 
-
+    - name: Deploy Amazon ECS task definition rollback
+      if: ${{ env.REQUEST != 0 }}
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ./task-definition.json.old
+        service: service-task-ci-cd-practice
+        cluster: cluster-ci-cd-practice
+        wait-for-service-stability: true
