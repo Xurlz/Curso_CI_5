@@ -17,4 +17,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: sa-east-1
 
+    - name: Clone devops repository
+      run: git clone --depth=1 https://github.com/leollo98/Infra_CI.git
+
 
