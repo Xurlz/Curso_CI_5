@@ -72,6 +72,7 @@ jobs:
 
   LoadTest:
     needs: docker
+    if: ${{ github.ref_name == 'staging' }}
     uses: ./.github/workflows/LoadTest.yml
     secrets: inherit
 
